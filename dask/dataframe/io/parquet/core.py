@@ -1,7 +1,7 @@
 import math
-import warnings
 import os
 from distutils.version import LooseVersion
+import warnings
 
 import tlz as toolz
 from fsspec.core import get_fs_token_paths
