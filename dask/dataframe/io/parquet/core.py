@@ -1,5 +1,6 @@
 import math
 import warnings
+import os
 from distutils.version import LooseVersion
 
 import tlz as toolz
@@ -524,6 +525,17 @@ def to_parquet(
         if append:
             raise ValueError("Cannot use both `overwrite=True` and `append=True`!")
         if fs.isdir(path):
+            # Ref: https://github.com/dask/dask/issues/7466
+            # Check that we are not writing to the same location we are reading from
+            graph = df.__dask_graph__()
+            for k, v in graph.layers.items():
+                if k.startswith("read-parquet-"):
+                    for part in v.parts:
+                        if os.path.dirname(part["piece"][0]) == path:
+                            raise ValueError(
+                                "Cannot read and write to same parquet file within the same task graph. Refer #7466"
+                            )
+
             # Only remove path contents if
             # (1) The path exists
             # (2) The path is a directory
